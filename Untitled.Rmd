@@ -1,0 +1,95 @@
+---
+title: "credit"
+author: "Jiayan"
+date: "7/27/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+setwd("/Users/yynpy/Desktop/resources/job/川谷/credit")
+sampleEntry <- read.csv("sampleEntry.csv", header = TRUE)
+cs_training <- read.csv("cs-training.csv", header = TRUE)
+cs_test <- read.csv("cs-test.csv", header = TRUE)
+```
+
+## overview
+```{r ifdefault}
+count(cs_training$SeriousDlqin2yrs)
+```
+```{r something}
+boxplot(cs_training$RevolvingUtilizationOfUnsecuredLines,ylab = 'RevolvingUtilizationOfUnsecuredLines')
+count(cs_training$RevolvingUtilizationOfUnsecuredLines < 1)
+median(cs_training$RevolvingUtilizationOfUnsecuredLines)
+boxplot(cs_training$NumberOfTime30.59DaysPastDueNotWorse,ylab = 'NumberOfTime30-59DaysPastDueNotWorse')
+median(cs_training$NumberOfTime30.59DaysPastDueNotWorse)
+
+boxplot(cs_training$age,ylab = 'age')
+count(cs_training$age < 80 & cs_training$age > 20)
+boxplot(cs_training$DebtRatio,ylab = 'DebtRatio')
+median(cs_training$DebtRatio)
+count(cs_training$DebtRatio < 20)
+count(cs_training$MonthlyIncome != 'NA')
+```
+```{r hhh}
+hist(cs_training$NumberOfOpenCreditLinesAndLoans,ylab = 'NumberOfOpenCreditLinesAndLoans')
+count(cs_training$NumberOfOpenCreditLinesAndLoans < 60)
+
+boxplot(cs_training$NumberRealEstateLoansOrLines,ylab = 'NumberRealEstateLoansOrLines')
+count(cs_training$NumberOfOpenCreditLinesAndLoans < 60)
+median(cs_training$NumberOfOpenCreditLinesAndLoans)
+
+boxplot(cs_training$NumberOfTimes90DaysLate,ylab = 'NumberOfTimes90DaysLate')
+count(cs_training$NumberOfTimes90DaysLate < 100)
+
+boxplot(cs_training$NumberRealEstateLoansOrLines,ylab = 'NumberRealEstateLoansOrLines')
+count(cs_training$NumberRealEstateLoansOrLinese < 60)
+
+boxplot(cs_training$NumberOfTime60.89DaysPastDueNotWorse)
+count(cs_training$NumberOfTime60.89DaysPastDueNotWorse < 100)
+
+boxplot(cs_training$NumberOfDependents)
+count(cs_training$NumberOfDependents < 100)
+
+```
+```{r clean}
+cs_training_cleaned <- subset(cs_training, RevolvingUtilizationOfUnsecuredLines < 100 & age > 0 & age < 100 & NumberOfTime30.59DaysPastDueNotWorse < 80 & DebtRatio < 10000 &  NumberOfOpenCreditLinesAndLoans < 100 & NumberOfOpenCreditLinesAndLoans < 100 & NumberOfTimes90DaysLate < 100 & NumberRealEstateLoansOrLines < 100 & NumberOfTime60.89DaysPastDueNotWorse < 100)
+cs_training_cleaned
+cs_test_cleaned <- subset(cs_test, RevolvingUtilizationOfUnsecuredLines < 100 & age > 0 & age < 100 & NumberOfTime30.59DaysPastDueNotWorse < 80 & DebtRatio < 10000 &  NumberOfOpenCreditLinesAndLoans < 100 & NumberOfOpenCreditLinesAndLoans < 100 & NumberOfTimes90DaysLate < 100 & NumberRealEstateLoansOrLines < 100 & NumberOfTime60.89DaysPastDueNotWorse < 100)
+cs_test_cleaned
+```
+
+
+## group
+```{r pressure}
+hist(cs_training_cleaned$SeriousDlqin2yrs)
+count(cs_training_cleaned$SeriousDlqin2yrs == 1)
+count(cs_training_cleaned$NumberOfDependents)
+cs_training_cleaned1 <- subset(cs_training_cleaned, MonthlyIncome != 'NA' & NumberOfDependents != 'NA')
+cs_training_cleaned1
+cs_training_cleaned2 <- subset(cs_training_cleaned, MonthlyIncome == 'NA' & NumberOfDependents != 'NA')
+cs_training_cleaned2
+cs_training_cleaned3 <- head(cs_training_cleaned1,20)
+```
+
+```{r fgeg}
+cs_training_cleaned3 <- head(cs_training_cleaned1,1000)
+#svm.fit<-svm(SeriousDlqin2yrs ~ RevolvingUtilizationOfUnsecuredLines +  NumberOfTime30.59DaysPastDueNotWorse + DebtRatio + MonthlyIncome + NumberOfOpenCreditLinesAndLoans + NumberOfTimes90DaysLate + NumberRealEstateLoansOrLines + NumberOfTime60.89DaysPastDueNotWorse + NumberOfDependents, data=cs_training_cleaned3)
+svm.fit<-svm(SeriousDlqin2yrs ~ ., data=cs_training_cleaned3)
+summary(svm.fit)
+predict(svm.fit)
+cs_training_cleaned3
+svm.pre<-ifelse(predict(svm.fit) > 0.5,1,0)
+n <- ifelse(svm.pre==cs_training_cleaned3$SeriousDlqin2yrs,1,0)
+sum(n)/nrow(cs_training_cleaned3)
+```
+
+```{r fevesv}
+library(lattice)
+xyplot(Petal.Length ~ Petal.Width, data = iris, groups = Species,auto.key=list(corner=c(1,0)))
+subdata <- iris[iris$Species!='virginica',]
+subdata$Species <- factor(subdata$Species)
+model1 <- svm(Species ~ Petal.Length + Petal.Width, data = subdata)
+plot(model1, subdata, Petal.Length ~ Petal.Width)
+model2 <- svm(Species ~ ., data = iris)
+iris
+```
